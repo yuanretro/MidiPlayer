@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="MidiPlayer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/MidiPlayer_jar</output-path>
+    <root id="archive" name="MidiPlayer.jar">
+      <element id="module-output" name="MidiPlayer" />
+    </root>
+  </artifact>
+</component>
