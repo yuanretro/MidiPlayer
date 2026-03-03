@@ -14,7 +14,7 @@ public class MidiPlayerGUI {
         frame.setSize(500, 200);
         frame.setLayout(new BorderLayout());
 
-        // 上部：显示文件名和长度
+        // Display file name and length
         JPanel infoPanel = new JPanel(new GridLayout(2, 1));
         JLabel fileLabel = new JLabel("No file loaded");
         JLabel lengthLabel = new JLabel("Length: 0");
@@ -22,7 +22,7 @@ public class MidiPlayerGUI {
         infoPanel.add(lengthLabel);
         frame.add(infoPanel, BorderLayout.NORTH);
 
-        // 中部：按钮
+        // Buttons
         JPanel buttonPanel = new JPanel();
         JButton loadButton = new JButton("Load");
         JButton playButton = new JButton("Play");
@@ -37,7 +37,7 @@ public class MidiPlayerGUI {
         buttonPanel.add(exitButton);
         frame.add(buttonPanel, BorderLayout.CENTER);
 
-        // 事件处理
+        // Catching events
         loadButton.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
             int result = chooser.showOpenDialog(frame);

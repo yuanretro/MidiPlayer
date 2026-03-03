@@ -6,14 +6,14 @@ public class MidiPlayerAplay {
 
     private Process process;
     private String midiFile;
-    private int clientId = 128; // QSynth 的 ALSA client ID
+    private int clientId = 128; // ALSA Client ID for Qsynth (or FluidSynth), can be altered
     private boolean loop = false;
 
     public MidiPlayerAplay(String midiFile) {
         this.midiFile = midiFile;
     }
 
-    // 播放 MIDI
+    // This method plays the MIDI file
     public void play() {
         if (process != null && process.isAlive()) {
             System.out.println("Alredy playing");
@@ -28,7 +28,7 @@ public class MidiPlayerAplay {
                     );
                     pb.inheritIO();
                     process = pb.start();
-                    process.waitFor(); // 等待播放结束
+                    process.waitFor(); // Wait until the playing is complete
                 } while (loop);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -38,7 +38,7 @@ public class MidiPlayerAplay {
         System.out.println("Playing...");
     }
 
-    // 加载文件
+    // Method for loading the MIDI file
     public void load(String newFile) {
         this.midiFile = newFile;
         System.out.println("Loaded file: " + newFile);
@@ -46,7 +46,7 @@ public class MidiPlayerAplay {
         System.out.println("File length: " + MidiUtils.timeSeparation(length));
     }
 
-    // 停止播放
+    // Method for stop playing
     public void stop() {
         if (process != null && process.isAlive()) {
             process.destroy();
@@ -56,7 +56,7 @@ public class MidiPlayerAplay {
         }
     }
 
-    // 设置循环播放
+    // Set repeat play
     public void setLoop(boolean loop) {
         this.loop = loop;
         System.out.println("Loop " + (loop ? "is enabled" : "is disabled"));
