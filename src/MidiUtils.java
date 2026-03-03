@@ -12,7 +12,7 @@ public class MidiUtils {
         try {
             File midiFile = new File(midiFilePath);
             if (!midiFile.exists() || !midiFile.isFile()) {
-                System.out.println("文件不存在或不是有效 MIDI 文件！");
+                System.out.println("File not found or not valid MIDI file!");
                 return -1;
             }
 
@@ -25,10 +25,26 @@ public class MidiUtils {
         }
     }
 
-    // 测试用例
-    public static void main(String[] args) {
-        String path = "example.mid";  // 替换成你的 MIDI 文件路径
-        double length = getMidiLength(path);
-        System.out.println("MIDI 文件长度：" + length + " 秒");
+    public static String timeSeparation (double second) {
+        int minutes = (int) (second / 60);
+        int seconds = (int) (second - (double) (minutes * 60));
+        return String.format("%02d:%02d", minutes, seconds);
     }
+
+    // 去除文件地址两边的单引号或者双引号
+    public static String trimPath (String path) {
+        if (path == null) return null;
+
+        path = path.trim(); // 去掉首尾空格
+
+        // 去掉首尾单引号或双引号
+        if ((path.startsWith("'") && path.endsWith("'")) ||
+                (path.startsWith("\"") && path.endsWith("\""))) {
+            path = path.substring(1, path.length() - 1);
+        }
+
+        return path;
+    }
+
+    public static void main(String[] args) {}
 }
