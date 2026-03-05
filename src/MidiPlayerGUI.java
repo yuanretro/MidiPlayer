@@ -7,6 +7,9 @@ public class MidiPlayerGUI {
 
     private MidiPlayerAplay player;
     private boolean loopMode = false;
+    private Timer timer;
+    private int timeElapsed = 0;
+    private int length1 = 0;
 
     public MidiPlayerGUI() {
         JFrame frame = new JFrame("MIDI Player");
@@ -17,7 +20,7 @@ public class MidiPlayerGUI {
         // Display file name and length
         JPanel infoPanel = new JPanel(new GridLayout(2, 1));
         JLabel fileLabel = new JLabel("No file loaded");
-        JLabel lengthLabel = new JLabel("Length: 0");
+        JLabel lengthLabel = new JLabel("Length: 00:00/00:00");
         infoPanel.add(fileLabel);
         infoPanel.add(lengthLabel);
         frame.add(infoPanel, BorderLayout.NORTH);
@@ -44,19 +47,32 @@ public class MidiPlayerGUI {
             if (result == JFileChooser.APPROVE_OPTION) {
                 File file = chooser.getSelectedFile();
                 if (player == null) player = new MidiPlayerAplay(file.getAbsolutePath());
-                else player.load(file.getAbsolutePath());
+                else {
+                    player.stop();
+                    player.load(file.getAbsolutePath());
+                }
                 fileLabel.setText("Loaded: " + file.getName());
                 double length = MidiUtils.getMidiLength(file.getAbsolutePath());
-                lengthLabel.setText("Length: " + MidiUtils.timeSeparation(length));
+                lengthLabel.setText("Length: 00:00/" + MidiUtils.timeSeparation(length));
+                length1 = (int) length;
+                timeElapsed = 0;
+                if (timer != null) timer.stop();
+                timer = new Timer(1000, event -> updateTime(lengthLabel));
             }
         });
 
         playButton.addActionListener(e -> {
             if (player != null) player.play();
+            if (timer != null) {
+                timeElapsed = 0;
+                lengthLabel.setText("Length: 00:00/" + MidiUtils.timeSeparation(length1));
+                timer.start();
+            }
         });
 
         stopButton.addActionListener(e -> {
             if (player != null) player.stop();
+            if (timer != null) timer.stop();
         });
 
         loopButton.addActionListener(e -> {
@@ -65,11 +81,27 @@ public class MidiPlayerGUI {
         });
 
         exitButton.addActionListener(e -> {
-            if (player != null) player.stop();
-            frame.dispose();
+            shutdown(frame);
         });
 
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+    }
+
+    private void updateTime(JLabel lengthLabel1) {
+        if (timeElapsed < length1) {
+            timeElapsed++;
+            lengthLabel1.setText("Length: " + MidiUtils.timeSeparation(timeElapsed) + "/" + MidiUtils.timeSeparation(length1));
+        } else {
+            timer.stop();
+        }
+    }
+
+    private void shutdown(JFrame frame1) {
+        if (player != null) player.stop();
+        if (timer != null) timer.stop();
+        frame1.dispose();
+        System.exit(0);
     }
 
     public static void main(String[] args) {
