@@ -93,12 +93,20 @@ public class MidiPlayerGUI {
             timeElapsed++;
             lengthLabel1.setText("Length: " + MidiUtils.timeSeparation(timeElapsed) + "/" + MidiUtils.timeSeparation(length1));
         } else {
-            timer.stop();
+            if (player.loop) {
+                timeElapsed = 0;
+                lengthLabel1.setText("Length: 00:00/" + MidiUtils.timeSeparation(length1));
+            } else {
+                timer.stop();
+            }
         }
     }
 
     private void shutdown(JFrame frame1) {
-        if (player != null) player.stop();
+        if (player != null) {
+            player.setLoop(false);
+            player.stop();
+        }
         if (timer != null) timer.stop();
         frame1.dispose();
         System.exit(0);

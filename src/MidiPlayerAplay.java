@@ -6,8 +6,8 @@ public class MidiPlayerAplay {
 
     private Process process;
     private String midiFile;
-    private int clientId = 128; // ALSA Client ID for Qsynth (or FluidSynth), can be altered
-    private boolean loop = false;
+    public int clientId = 129; // ALSA Client ID for Qsynth (or FluidSynth), can be altered
+    public boolean loop = false;
 
     public MidiPlayerAplay(String midiFile) {
         this.midiFile = midiFile;
@@ -49,6 +49,7 @@ public class MidiPlayerAplay {
     // Method for stop playing
     public void stop() {
         if (process != null && process.isAlive()) {
+            setLoop(false);
             process.destroy();
             System.out.println("Playing stopped");
         } else {
