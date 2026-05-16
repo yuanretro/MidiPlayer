@@ -6,7 +6,7 @@ public class MidiPlayerAplay {
 
     private Process process;
     private String midiFile;
-    public int clientId = 129; // ALSA Client ID for Qsynth (or FluidSynth), can be altered
+    public int clientId = 32; // ALSA Client ID for Roland MIDI Synthesizers
     public boolean loop = false;
 
     public MidiPlayerAplay(String midiFile) {
