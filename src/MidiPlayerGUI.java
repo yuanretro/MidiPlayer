@@ -1,23 +1,28 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.io.File;
+import java.util.prefs.Preferences;
 
 public class MidiPlayerGUI {
-
     private MidiPlayerAplay player;
     private boolean loopMode = false;
     private Timer timer;
     private int timeElapsed = 0;
     private int length1 = 0;
+    private final JFileChooser chooser = new JFileChooser();
+    private final Preferences prefs = Preferences.userNodeForPackage(MidiPlayerGUI.class);
 
     public MidiPlayerGUI() {
+        // 启动时恢复上次目录
+        String lastDir = prefs.get("lastDir", null);
+        if (lastDir != null) chooser.setCurrentDirectory(new File(lastDir));
+
         JFrame frame = new JFrame("MIDI Player");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(500, 200);
         frame.setLayout(new BorderLayout());
 
-        // Display file name and length
+        // 显示文件名和长度
         JPanel infoPanel = new JPanel(new GridLayout(2, 1));
         JLabel fileLabel = new JLabel("No file loaded");
         JLabel lengthLabel = new JLabel("Length: 00:00/00:00");
@@ -25,14 +30,13 @@ public class MidiPlayerGUI {
         infoPanel.add(lengthLabel);
         frame.add(infoPanel, BorderLayout.NORTH);
 
-        // Buttons
+        // 按钮
         JPanel buttonPanel = new JPanel();
         JButton loadButton = new JButton("Load");
         JButton playButton = new JButton("Play");
         JButton stopButton = new JButton("Stop");
         JButton loopButton = new JButton("Loop");
         JButton exitButton = new JButton("Exit");
-
         buttonPanel.add(loadButton);
         buttonPanel.add(playButton);
         buttonPanel.add(stopButton);
@@ -40,12 +44,15 @@ public class MidiPlayerGUI {
         buttonPanel.add(exitButton);
         frame.add(buttonPanel, BorderLayout.CENTER);
 
-        // Catching events
+        // 事件处理
         loadButton.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
             int result = chooser.showOpenDialog(frame);
             if (result == JFileChooser.APPROVE_OPTION) {
                 File file = chooser.getSelectedFile();
+
+                // 保存当前目录到 Preferences
+                prefs.put("lastDir", file.getParent());
+
                 if (player == null) player = new MidiPlayerAplay(file.getAbsolutePath());
                 else {
                     player.stop();
@@ -80,11 +87,8 @@ public class MidiPlayerGUI {
             if (player != null) player.setLoop(loopMode);
         });
 
-        exitButton.addActionListener(e -> {
-            shutdown(frame);
-        });
+        exitButton.addActionListener(e -> shutdown(frame));
 
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
 
