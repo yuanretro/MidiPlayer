@@ -24,7 +24,7 @@ public class MidiPlayerAplay {
     private int generation = 0; // Incremented on each play/stop, lets old playing threads know they are outdated
     private volatile String playingPort;
     private String midiFile;
-    private volatile String port = "32:0"; // ALSA port, default is client 32 (Roland MIDI Synthesizers)
+    private volatile String port; // ALSA port, e.g. "128:0". If not set, the first available port is used
     public volatile boolean loop = false;
 
     public MidiPlayerAplay(String midiFile) {
@@ -36,6 +36,15 @@ public class MidiPlayerAplay {
         if (!stopped) {
             System.out.println("Alredy playing");
             return;
+        }
+
+        if (port == null) {
+            List<String[]> ports = listPorts();
+            if (ports.isEmpty()) {
+                System.out.println("No MIDI output port found");
+                return;
+            }
+            setPort(ports.get(0)[0]);
         }
 
         stopped = false;
@@ -222,7 +231,7 @@ public class MidiPlayerAplay {
                     for (String[] info : listPorts()) {
                         System.out.println(info[0] + "\t" + info[1] + " - " + info[2]);
                     }
-                    System.out.print("Please enter the port (current " + player.getPort() + ", empty to keep): ");
+                    System.out.print("Please enter the port (current " + (player.getPort() == null ? "auto" : player.getPort()) + ", empty to keep): ");
                     String newPort = scanner.nextLine().trim();
                     if (!newPort.isEmpty()) player.setPort(newPort);
                     break;
