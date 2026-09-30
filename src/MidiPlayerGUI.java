@@ -15,7 +15,7 @@ public class MidiPlayerGUI {
     private int timeElapsed = 0;
     private int length1 = 0;
     private final JFileChooser chooser = new JFileChooser();
-    private final Preferences prefs = Preferences.userNodeForPackage(MidiPlayerGUI.class);
+    private final Preferences prefs = MidiBackend.prefs();
     private String selectedPort;
     private boolean updatingPorts = false;
     private final DefaultComboBoxModel<String> portModel = new DefaultComboBoxModel<>();
@@ -28,7 +28,7 @@ public class MidiPlayerGUI {
 
         // 启动时恢复上次选择的端口（没有的话在 refreshPorts 中自动选择第一个可用端口）
         // Linux (aplaymidi) 和 Windows (Java Sound) 的端口格式不同，分开保存
-        selectedPort = prefs.get(portPrefKey(), null);
+        selectedPort = prefs.get(MidiBackend.portPrefKey(), null);
 
         JFrame frame = new JFrame("MIDI Player");
         // 关闭窗口时也走 shutdown，保证发送复位信息
@@ -165,13 +165,9 @@ public class MidiPlayerGUI {
         }
     }
 
-    private String portPrefKey() {
-        return useAplay ? "port" : "port.javasound";
-    }
-
     private void usePort(String port) {
         selectedPort = port;
-        prefs.put(portPrefKey(), port);
+        prefs.put(MidiBackend.portPrefKey(), port);
         if (player != null) player.setPort(port);
     }
 

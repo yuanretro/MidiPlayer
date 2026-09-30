@@ -68,6 +68,7 @@ jobs:
           mkdir smoke
           tar -C smoke -xzf dist/*.tar.gz
           printf '/dev/null\nexit\n' | smoke/*/bin/midiplayer-cli
+          printf '\nhelp\nstatus\nport\n\n' | smoke/*/bin/midiplayer-cli
 
       - name: Smoke test Windows app
         if: matrix.os == 'windows'
@@ -77,6 +78,8 @@ jobs:
           test -f smoke/*/MidiPlayer.exe
           # List the MIDI output devices with the bundled runtime
           smoke/*/runtime/bin/java.exe -cp "$(echo smoke/*/app/MidiPlayer.jar)" MidiPlayerJavaSound
+          # Text mode launcher: list the ports, show the status, quit at the end of input
+          printf '\nport\n\nstatus\n' | timeout 120 smoke/*/MidiPlayer-cli.exe
 
       - name: Remove duplicate jar
         if: matrix.os != 'linux' || matrix.arch != 'x86_64'
@@ -110,7 +113,7 @@ jobs:
             | --- | --- |
             | `MidiPlayer-${{ env.RELEASE_VERSION }}-linux-x86_64.tar.gz` | Self-contained, Java included (Intel/AMD 64-bit) |
             | `MidiPlayer-${{ env.RELEASE_VERSION }}-linux-aarch64.tar.gz` | Self-contained, Java included (ARM 64-bit, e.g. Raspberry Pi 4/5 64-bit OS) |
-            | `MidiPlayer-${{ env.RELEASE_VERSION }}-windows-x86_64.zip` | Windows 64-bit, Java included: unzip and run `MidiPlayer.exe` |
+            | `MidiPlayer-${{ env.RELEASE_VERSION }}-windows-x86_64.zip` | Windows 64-bit, Java included: unzip and run `MidiPlayer.exe` (GUI) or `MidiPlayer-cli.exe` (text mode) |
             | `MidiPlayer.jar` | Needs Java 8 or newer installed: `java -jar MidiPlayer.jar` |
 
             ## Usage
@@ -124,7 +127,10 @@ jobs:
 
             Windows: unzip and run `MidiPlayer.exe`, then choose any MIDI output device in the
             Port list, including hardware synthesizers / USB MIDI interfaces, Microsoft GS
-            Wavetable Synth and virtual ports.
+            Wavetable Synth and virtual ports. `MidiPlayer-cli.exe` is the text mode.
+
+            Text mode commands (Linux and Windows): `load [file]`, `play`, `stop`, `loop`,
+            `port [n]`, `status`, `help`, `exit`. It remembers the port and folder like the GUI.
 
             ## System requirements
 

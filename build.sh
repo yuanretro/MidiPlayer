@@ -51,16 +51,21 @@ if [ "$OS" = windows ]; then
     [[ "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || APP_VERSION=1.0.0
     mkdir -p "$BUILD/input"
     cp "$DIST/MidiPlayer.jar" "$BUILD/input/"
+    # Second launcher for the text mode, opens a console window
+    printf 'main-class=MidiPlayerCLI\nwin-console=true\n' > "$BUILD/cli-launcher.properties"
     jpackage --type app-image --name MidiPlayer --app-version "$APP_VERSION" \
              --input "$BUILD/input" --main-jar MidiPlayer.jar --main-class MidiPlayerGUI \
+             --add-launcher MidiPlayer-cli="$BUILD/cli-launcher.properties" \
              --runtime-image "$BUILD/runtime" --dest "$BUILD/app"
     test -f "$BUILD/app/MidiPlayer/MidiPlayer.exe"
+    test -f "$BUILD/app/MidiPlayer/MidiPlayer-cli.exe"
     mv "$BUILD/app/MidiPlayer" "$BUNDLE"
 
     cat > "$BUNDLE/README.txt" <<EOF
 MidiPlayer ${VERSION} (Windows ${ARCH})
 
-Run MidiPlayer.exe. A Java runtime is included, Java does not need to be installed.
+Run MidiPlayer.exe (GUI) or MidiPlayer-cli.exe (text mode, type "help" for the commands).
+A Java runtime is included, Java does not need to be installed.
 
 Requires Windows 10 64-bit, Windows 11 or Windows Server 2016 or newer.
 
@@ -98,14 +103,14 @@ EOF
     chmod +x "$BUNDLE/bin/$1"
 }
 write_launcher midiplayer MidiPlayerGUI
-write_launcher midiplayer-cli MidiPlayerAplay
+write_launcher midiplayer-cli MidiPlayerCLI
 
 cat > "$BUNDLE/README.txt" <<EOF
 MidiPlayer ${VERSION} (Linux ${ARCH})
 
 Run:
   ./bin/midiplayer        GUI
-  ./bin/midiplayer-cli    text mode
+  ./bin/midiplayer-cli    text mode (optional argument: MIDI file, type "help" for the commands)
 
 A Java runtime is included, Java does not need to be installed.
 
