@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
@@ -19,8 +20,54 @@ public class MidiPlayerCLI {
     private double length = 0;
     private long playStart; // Time when play was pressed, for the elapsed time
 
+    // The prompt currently waiting for input, null while a command runs. Guarded by System.out
+    private static String activePrompt;
+    private static boolean console;
+
     public static void main(String[] args) {
+        installOutput();
         new MidiPlayerCLI().run(args);
+    }
+
+    // The players print messages from background threads (e.g. "GM/GS/XG reset sent" when a
+    // song ends). If that happens while a prompt waits for input, print the message on its own
+    // line and show the prompt again, instead of appending it to the prompt line.
+    private static void installOutput() {
+        console = System.console() != null;
+        PrintStream out = System.out;
+        System.setOut(new PrintStream(out, true) {
+            @Override
+            public void println(String x) {
+                synchronized (this) {
+                    if (activePrompt == null) {
+                        super.println(x);
+                    } else if (console) {
+                        // Overwrite the prompt line with the message, then show the prompt again
+                        super.print("\r" + pad(x, activePrompt.length()) + System.lineSeparator() + activePrompt);
+                        flush();
+                    } else {
+                        super.print(System.lineSeparator() + x + System.lineSeparator() + activePrompt);
+                        flush();
+                    }
+                }
+            }
+
+            @Override
+            public void println(Object x) {
+                println(String.valueOf(x));
+            }
+
+            @Override
+            public void println() {
+                println("");
+            }
+        });
+    }
+
+    private static String pad(String text, int width) {
+        StringBuilder sb = new StringBuilder(text);
+        while (sb.length() < width) sb.append(' ');
+        return sb.toString();
     }
 
     private void run(String[] args) {
@@ -98,9 +145,16 @@ public class MidiPlayerCLI {
 
     // Read a line, null at the end of input
     private String prompt(String text) {
-        System.out.print(text);
-        System.out.flush();
-        return scanner.hasNextLine() ? scanner.nextLine() : null;
+        synchronized (System.out) {
+            System.out.print(text);
+            System.out.flush();
+            activePrompt = text;
+        }
+        String line = scanner.hasNextLine() ? scanner.nextLine() : null;
+        synchronized (System.out) {
+            activePrompt = null;
+        }
+        return line;
     }
 
     private String lastDirHint() {

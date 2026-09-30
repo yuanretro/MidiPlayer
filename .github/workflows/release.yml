@@ -67,8 +67,22 @@ jobs:
         run: |
           mkdir smoke
           tar -C smoke -xzf dist/*.tar.gz
+          test -x smoke/*/bin/MidiPlayer
+          printf '\nhelp\nstatus\nport\n\n' | smoke/*/bin/MidiPlayer-cli
+          # The old script names still work
           printf '/dev/null\nexit\n' | smoke/*/bin/midiplayer-cli
-          printf '\nhelp\nstatus\nport\n\n' | smoke/*/bin/midiplayer-cli
+
+      - name: Check glibc requirement
+        if: matrix.os == 'linux'
+        run: |
+          # The documented minimum is glibc 2.17, fail if anything in the bundle needs more
+          needed=$(find smoke -type f \( -path '*/bin/*' -o -name '*.so' \) -exec readelf -V {} \; 2>/dev/null \
+                   | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -uV | tail -1)
+          echo "Highest glibc version needed: $needed"
+          if [ "$(printf '%s\n' "$needed" 2.17 | sort -V | tail -1)" != "2.17" ]; then
+            echo "::error::The bundle needs glibc $needed, more than the documented 2.17"
+            exit 1
+          fi
 
       - name: Smoke test Windows app
         if: matrix.os == 'windows'
@@ -121,9 +135,13 @@ jobs:
             ```sh
             tar xzf MidiPlayer-${{ env.RELEASE_VERSION }}-linux-x86_64.tar.gz
             cd MidiPlayer-${{ env.RELEASE_VERSION }}-linux-x86_64
-            ./bin/midiplayer        # GUI
-            ./bin/midiplayer-cli    # text mode
+            ./bin/MidiPlayer        # GUI
+            ./bin/MidiPlayer-cli    # text mode
+            ./install-menu.sh       # optional: add both to the application menu
             ```
+
+            Linux: `bin/MidiPlayer` can also be double-clicked in the file manager, and
+            `MidiPlayer-cli.desktop` opens the text mode in a terminal.
 
             Windows: unzip and run `MidiPlayer.exe`, then choose any MIDI output device in the
             Port list, including hardware synthesizers / USB MIDI interfaces, Microsoft GS
