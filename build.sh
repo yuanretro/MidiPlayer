@@ -62,6 +62,8 @@ MidiPlayer ${VERSION} (Windows ${ARCH})
 
 Run MidiPlayer.exe. A Java runtime is included, Java does not need to be installed.
 
+Requires Windows 10 64-bit, Windows 11 or Windows Server 2016 or newer.
+
 Choose the output in the "Port" list at the bottom of the window. It lists every MIDI output
 device of the system: hardware synthesizers and USB MIDI interfaces, Microsoft GS Wavetable
 Synth, virtual ports (loopMIDI, VirtualMIDISynth), and the built-in Java synthesizer (Gervill).
@@ -108,6 +110,8 @@ Run:
 A Java runtime is included, Java does not need to be installed.
 
 Requirements on the target machine:
+  - Linux with glibc 2.17 or newer (RHEL/CentOS 7+, Debian 8+, Ubuntu 14.04+,
+    Fedora, openSUSE, Arch, Raspberry Pi OS 64-bit, ...). Alpine (musl) is not supported
   - aplaymidi (package alsa-utils), e.g.  sudo apt install alsa-utils
   - a desktop session (X11 or XWayland) for the GUI
   - a MIDI output: a hardware synth, or a software synth such as

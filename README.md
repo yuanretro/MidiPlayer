@@ -25,16 +25,41 @@ tar xzf MidiPlayer-<version>-linux-x86_64.tar.gz
 ./MidiPlayer-<version>-linux-x86_64/bin/midiplayer-cli   # text mode
 ```
 
-## Requirements
+## System requirements
 
-Linux:
+### Windows (`MidiPlayer-<version>-windows-x86_64.zip`)
 
-- `aplaymidi` from `alsa-utils` (e.g. `sudo apt install alsa-utils`)
-- A MIDI output: a hardware synth, or a software synth such as TiMidity++ or FluidSynth
+| | Minimum |
+| --- | --- |
+| OS | Windows 10 64-bit, Windows 11, Windows Server 2016 or newer |
+| CPU | x86_64 (Intel/AMD 64-bit) |
+| Java | Not needed, a Java 21 runtime is included |
+| MIDI output | Any MIDI output device: hardware synthesizer / USB MIDI interface, Microsoft GS Wavetable Synth, virtual ports (loopMIDI, VirtualMIDISynth), or the built-in Java synthesizer |
 
-Windows:
+- Windows 7 / 8 / 8.1 and 32-bit Windows are not supported by the bundled Java 21 runtime.
+  On those systems use `MidiPlayer.jar` with Java 8 or newer installed.
+- Windows on ARM (Windows 11 ARM64) is not tested; it may work through x64 emulation.
 
-- Nothing extra. Choose the device in the Port list, press Refresh after connecting a device.
+### Linux (`MidiPlayer-<version>-linux-x86_64.tar.gz` / `...-linux-aarch64.tar.gz`)
+
+| | Minimum |
+| --- | --- |
+| C library | glibc 2.17 or newer, e.g. RHEL / CentOS / Rocky / Alma 7+, Debian 8+, Ubuntu 14.04+, Fedora, openSUSE, Arch, Linux Mint, Raspberry Pi OS 64-bit |
+| CPU | x86_64 (Intel/AMD 64-bit) or aarch64 (ARM 64-bit, e.g. Raspberry Pi 3/4/5 with a 64-bit OS) |
+| Java | Not needed, a Java 21 runtime is included |
+| Packages | `alsa-utils` (provides `aplaymidi`, e.g. `sudo apt install alsa-utils` / `sudo dnf install alsa-utils`) |
+| GUI | An X11 or Wayland (XWayland) desktop with the usual X11 libraries (`libX11`, `libXext`, `libXi`, `libXrender`, `libXtst`), installed on every desktop distribution. The text mode (`midiplayer-cli`) does not need a desktop |
+| MIDI output | An ALSA sequencer port: hardware synthesizer / USB MIDI interface, or a software synthesizer such as TiMidity++ or FluidSynth |
+
+- musl-based distributions (Alpine Linux) and 32-bit systems (i386, armhf such as 32-bit
+  Raspberry Pi OS) are not supported by the bundles. On those systems use `MidiPlayer.jar`
+  with Java 8 or newer installed.
+
+### `MidiPlayer.jar`
+
+- Java 8 or newer, on any system Java runs on (including 32-bit and older systems).
+- Linux additionally needs `alsa-utils`, as above.
+- Other systems such as macOS use the Java Sound backend like Windows, but are not tested.
 
 ## Build
 
