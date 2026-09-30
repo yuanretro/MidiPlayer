@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Build MidiPlayer for Linux.
+# Build MidiPlayer for Linux and Windows.
 #
 # Output in dist/:
-#   MidiPlayer.jar                          runnable jar, needs Java 8+ installed
-#   MidiPlayer-<version>-linux-<arch>.tar.gz  self-contained bundle with its own Java runtime
+#   MidiPlayer.jar                              runnable jar, needs Java 8+ installed
+#   MidiPlayer-<version>-linux-<arch>.tar.gz    (on Linux) self-contained bundle with its own Java runtime
+#   MidiPlayer-<version>-windows-<arch>.zip     (on Windows, run with Git Bash) self-contained
+#                                               app with MidiPlayer.exe and its own Java runtime
 #
-# Requirements: JDK 11+ (javac, jar, jlink) on the build machine.
-# The bundle is built for the architecture of the build machine.
+# Requirements: JDK 11+ (javac, jar, jlink) on the build machine, JDK 14+ (jpackage) on Windows.
+# The bundle is built for the operating system and architecture of the build machine.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -17,9 +19,14 @@ case "$ARCH" in
     arm64) ARCH=aarch64 ;;
 esac
 
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) OS=windows ;;
+    *) OS=linux ;;
+esac
+
 BUILD=build
 DIST=dist
-NAME="MidiPlayer-${VERSION}-linux-${ARCH}"
+NAME="MidiPlayer-${VERSION}-${OS}-${ARCH}"
 BUNDLE="$BUILD/$NAME"
 
 rm -rf "$BUILD" "$DIST"
@@ -30,6 +37,42 @@ javac --release 8 -Xlint:-options -encoding UTF-8 -d "$BUILD/classes" src/*.java
 
 echo "==> Packaging jar"
 jar cfm "$DIST/MidiPlayer.jar" src/META-INF/MANIFEST.MF -C "$BUILD/classes" .
+
+if [ "$OS" = windows ]; then
+    echo "==> Creating Java runtime"
+    jlink --add-modules java.base,java.desktop,java.prefs \
+          --strip-debug --no-man-pages --no-header-files --compress=2 \
+          --output "$BUILD/runtime" 2>&1 | grep -v -i "deprecat" || true
+    test -f "$BUILD/runtime/bin/java.exe"
+
+    echo "==> Creating Windows app"
+    # jpackage needs a numeric version such as 1.2.3
+    APP_VERSION="${VERSION#v}"
+    [[ "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || APP_VERSION=1.0.0
+    mkdir -p "$BUILD/input"
+    cp "$DIST/MidiPlayer.jar" "$BUILD/input/"
+    jpackage --type app-image --name MidiPlayer --app-version "$APP_VERSION" \
+             --input "$BUILD/input" --main-jar MidiPlayer.jar --main-class MidiPlayerGUI \
+             --runtime-image "$BUILD/runtime" --dest "$BUILD/app"
+    test -f "$BUILD/app/MidiPlayer/MidiPlayer.exe"
+    mv "$BUILD/app/MidiPlayer" "$BUNDLE"
+
+    cat > "$BUNDLE/README.txt" <<EOF
+MidiPlayer ${VERSION} (Windows ${ARCH})
+
+Run MidiPlayer.exe. A Java runtime is included, Java does not need to be installed.
+
+Choose the output in the "Port" list at the bottom of the window. It lists every MIDI output
+device of the system: hardware synthesizers and USB MIDI interfaces, Microsoft GS Wavetable
+Synth, virtual ports (loopMIDI, VirtualMIDISynth), and the built-in Java synthesizer (Gervill).
+Press "Refresh" after connecting a device.
+EOF
+
+    (cd "$BUILD" && 7z a -tzip -bso0 "../$DIST/$NAME.zip" "$NAME")
+    echo "==> Done"
+    ls -lh "$DIST"
+    exit 0
+fi
 
 echo "==> Creating Java runtime"
 jlink --add-modules java.base,java.desktop,java.prefs \

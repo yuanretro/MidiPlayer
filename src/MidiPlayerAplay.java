@@ -10,14 +10,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MidiPlayerAplay {
+public class MidiPlayerAplay implements MidiBackend {
 
     private static final String APLAYMIDI = findAplaymidi();
 
     // GM System On / GS Reset / XG System On
-    private static final byte[] GM_RESET = {(byte) 0xF0, 0x7E, 0x7F, 0x09, 0x01, (byte) 0xF7};
-    private static final byte[] GS_RESET = {(byte) 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, (byte) 0xF7};
-    private static final byte[] XG_RESET = {(byte) 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, (byte) 0xF7};
+    static final byte[] GM_RESET = {(byte) 0xF0, 0x7E, 0x7F, 0x09, 0x01, (byte) 0xF7};
+    static final byte[] GS_RESET = {(byte) 0xF0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7F, 0x00, 0x41, (byte) 0xF7};
+    static final byte[] XG_RESET = {(byte) 0xF0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, (byte) 0xF7};
 
     private volatile Process process;
     private volatile boolean stopped = true;
@@ -126,6 +126,19 @@ public class MidiPlayerAplay {
 
     public String getPort() {
         return port;
+    }
+
+    public boolean isLoop() {
+        return loop;
+    }
+
+    // Ports in the form used by the GUI: {port, "port   client name - port name"}
+    public static List<String[]> listPortsForDisplay() {
+        List<String[]> result = new ArrayList<>();
+        for (String[] info : listPorts()) {
+            result.add(new String[]{info[0], info[0] + "   " + info[1] + " - " + info[2]});
+        }
+        return result;
     }
 
     // Find aplaymidi (from alsa-utils) in PATH, its location differs between distributions

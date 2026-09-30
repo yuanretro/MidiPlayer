@@ -3,10 +3,13 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 public class MidiPlayerGUI {
-    private MidiPlayerAplay player;
+    private MidiBackend player;
+    private final boolean useAplay = MidiBackend.useAplay();
     private boolean loopMode = false;
     private Timer timer;
     private int timeElapsed = 0;
@@ -16,6 +19,7 @@ public class MidiPlayerGUI {
     private String selectedPort;
     private boolean updatingPorts = false;
     private final DefaultComboBoxModel<String> portModel = new DefaultComboBoxModel<>();
+    private final List<String> portIds = new ArrayList<>(); // Port id of each item in portModel
 
     public MidiPlayerGUI() {
         // 启动时恢复上次目录
@@ -23,7 +27,8 @@ public class MidiPlayerGUI {
         if (lastDir != null) chooser.setCurrentDirectory(new File(lastDir));
 
         // 启动时恢复上次选择的端口（没有的话在 refreshPorts 中自动选择第一个可用端口）
-        selectedPort = prefs.get("port", null);
+        // Linux (aplaymidi) 和 Windows (Java Sound) 的端口格式不同，分开保存
+        selectedPort = prefs.get(portPrefKey(), null);
 
         JFrame frame = new JFrame("MIDI Player");
         // 关闭窗口时也走 shutdown，保证发送复位信息
@@ -63,13 +68,13 @@ public class MidiPlayerGUI {
         JPanel portPanel = new JPanel(new BorderLayout(5, 0));
         portPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
         JComboBox<String> portBox = new JComboBox<>(portModel);
-        portBox.setToolTipText("aplaymidi output port (takes effect on next play)");
+        portBox.setToolTipText((useAplay ? "aplaymidi output port" : "MIDI output device") + " (takes effect on next play)");
         JButton refreshButton = new JButton("Refresh");
         portPanel.add(new JLabel("Port:"), BorderLayout.WEST);
         portPanel.add(portBox, BorderLayout.CENTER);
         portPanel.add(refreshButton, BorderLayout.EAST);
         frame.add(portPanel, BorderLayout.SOUTH);
-        if (!MidiPlayerAplay.isAplaymidiAvailable()) {
+        if (useAplay && !MidiPlayerAplay.isAplaymidiAvailable()) {
             JOptionPane.showMessageDialog(frame,
                     "aplaymidi not found.\nPlease install alsa-utils (e.g. sudo apt install alsa-utils).",
                     "MIDI Player", JOptionPane.WARNING_MESSAGE);
@@ -86,7 +91,7 @@ public class MidiPlayerGUI {
                 prefs.put("lastDir", file.getParent());
 
                 if (player == null) {
-                    player = new MidiPlayerAplay(file.getAbsolutePath());
+                    player = MidiBackend.create(file.getAbsolutePath());
                     if (selectedPort != null) player.setPort(selectedPort);
                 } else {
                     stopInBackground();
@@ -127,58 +132,53 @@ public class MidiPlayerGUI {
 
         portBox.addActionListener(e -> {
             if (updatingPorts) return;
-            Object item = portBox.getSelectedItem();
-            if (item == null) return;
-            String port = item.toString().split("\\s+", 2)[0];
-            if (!port.matches("\\d+:\\d+")) return; // 占位项，例如没有可用端口
-            usePort(port);
+            int index = portBox.getSelectedIndex();
+            if (index < 0 || index >= portIds.size()) return; // 占位项，例如没有可用端口
+            usePort(portIds.get(index));
         });
 
         frame.setVisible(true);
     }
 
-    // 通过 aplaymidi -l 重新获取可用端口列表
+    // 重新获取可用端口列表（Linux 通过 aplaymidi -l，Windows 通过 Java Sound）
     // 上次使用的端口仍然可用时保持选中，否则自动选择第一个可用端口
     private void refreshPorts() {
         updatingPorts = true;
         try {
             portModel.removeAllElements();
-            String selectedItem = null;
-            String firstItem = null;
-            String firstPort = null;
-            for (String[] info : MidiPlayerAplay.listPorts()) {
-                String item = info[0] + "   " + info[1] + " - " + info[2];
-                portModel.addElement(item);
-                if (firstItem == null) {
-                    firstItem = item;
-                    firstPort = info[0];
-                }
-                if (info[0].equals(selectedPort)) selectedItem = item;
+            portIds.clear();
+            int selectedIndex = -1;
+            for (String[] info : MidiBackend.listPorts()) {
+                if (info[0].equals(selectedPort)) selectedIndex = portIds.size();
+                portIds.add(info[0]);
+                portModel.addElement(info[1]);
             }
-            if (selectedItem != null) {
-                portModel.setSelectedItem(selectedItem);
-                usePort(selectedPort);
-            } else if (firstItem != null) {
-                portModel.setSelectedItem(firstItem);
-                usePort(firstPort);
-            } else {
+            if (portIds.isEmpty()) {
                 portModel.addElement("(no MIDI output port found)");
+                return;
             }
+            if (selectedIndex < 0) selectedIndex = 0;
+            portModel.setSelectedItem(portModel.getElementAt(selectedIndex));
+            usePort(portIds.get(selectedIndex));
         } finally {
             updatingPorts = false;
         }
     }
 
+    private String portPrefKey() {
+        return useAplay ? "port" : "port.javasound";
+    }
+
     private void usePort(String port) {
         selectedPort = port;
-        prefs.put("port", port);
+        prefs.put(portPrefKey(), port);
         if (player != null) player.setPort(port);
     }
 
     // 停止播放和复位需要一些时间，放到后台线程避免界面卡住
     private void stopInBackground() {
         if (player == null) return;
-        MidiPlayerAplay p = player;
+        MidiBackend p = player;
         new Thread(p::stop).start();
     }
 
@@ -187,7 +187,7 @@ public class MidiPlayerGUI {
             timeElapsed++;
             lengthLabel1.setText("Length: " + MidiUtils.timeSeparation(timeElapsed) + "/" + MidiUtils.timeSeparation(length1));
         } else {
-            if (player.loop) {
+            if (player.isLoop()) {
                 timeElapsed = 0;
                 lengthLabel1.setText("Length: 00:00/" + MidiUtils.timeSeparation(length1));
             } else {
