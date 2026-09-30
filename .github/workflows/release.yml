@@ -117,8 +117,18 @@ jobs:
             ./bin/midiplayer-cli    # text mode
             ```
 
-            Linux: requires `aplaymidi` (package `alsa-utils`) and a MIDI output
-            (hardware synth, or a software synth such as TiMidity++ / FluidSynth).
+            Windows: unzip and run `MidiPlayer.exe`, then choose any MIDI output device in the
+            Port list, including hardware synthesizers / USB MIDI interfaces, Microsoft GS
+            Wavetable Synth and virtual ports.
 
-            Windows: choose any MIDI output device in the Port list, including hardware
-            synthesizers / USB MIDI interfaces, Microsoft GS Wavetable Synth and virtual ports.
+            ## System requirements
+
+            | Package | Minimum |
+            | --- | --- |
+            | Windows zip | Windows 10 64-bit / Windows 11 / Windows Server 2016 or newer, x86_64 |
+            | Linux tar.gz | glibc 2.17 or newer (RHEL/CentOS 7+, Debian 8+, Ubuntu 14.04+, ...), x86_64 or aarch64, `alsa-utils` installed, X11/XWayland desktop for the GUI |
+            | `MidiPlayer.jar` | Java 8 or newer; on Linux also `alsa-utils` |
+
+            Windows 7/8.1, 32-bit systems and Alpine Linux are not supported by the bundles, use
+            `MidiPlayer.jar` with Java 8+ there. See the
+            [README](https://github.com/yuanretro/MidiPlayer#system-requirements) for details.
