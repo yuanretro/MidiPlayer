@@ -14,6 +14,7 @@ public class MidiPlayerGUI {
     private final JFileChooser chooser = new JFileChooser();
     private final Preferences prefs = Preferences.userNodeForPackage(MidiPlayerGUI.class);
     private String selectedPort;
+    private boolean updatingPorts = false;
     private final DefaultComboBoxModel<String> portModel = new DefaultComboBoxModel<>();
 
     public MidiPlayerGUI() {
@@ -21,8 +22,8 @@ public class MidiPlayerGUI {
         String lastDir = prefs.get("lastDir", null);
         if (lastDir != null) chooser.setCurrentDirectory(new File(lastDir));
 
-        // 启动时恢复上次选择的端口
-        selectedPort = prefs.get("port", "32:0");
+        // 启动时恢复上次选择的端口（没有的话在 refreshPorts 中自动选择第一个可用端口）
+        selectedPort = prefs.get("port", null);
 
         JFrame frame = new JFrame("MIDI Player");
         // 关闭窗口时也走 shutdown，保证发送复位信息
@@ -81,7 +82,7 @@ public class MidiPlayerGUI {
 
                 if (player == null) {
                     player = new MidiPlayerAplay(file.getAbsolutePath());
-                    player.setPort(selectedPort);
+                    if (selectedPort != null) player.setPort(selectedPort);
                 } else {
                     stopInBackground();
                     player.load(file.getAbsolutePath());
@@ -120,32 +121,53 @@ public class MidiPlayerGUI {
         refreshButton.addActionListener(e -> refreshPorts());
 
         portBox.addActionListener(e -> {
+            if (updatingPorts) return;
             Object item = portBox.getSelectedItem();
             if (item == null) return;
-            selectedPort = item.toString().split("\\s+", 2)[0];
-            prefs.put("port", selectedPort);
-            if (player != null) player.setPort(selectedPort);
+            String port = item.toString().split("\\s+", 2)[0];
+            if (!port.matches("\\d+:\\d+")) return; // 占位项，例如没有可用端口
+            usePort(port);
         });
 
         frame.setVisible(true);
     }
 
     // 通过 aplaymidi -l 重新获取可用端口列表
+    // 上次使用的端口仍然可用时保持选中，否则自动选择第一个可用端口
     private void refreshPorts() {
-        String keep = selectedPort;
-        portModel.removeAllElements();
-        String selectedItem = null;
-        for (String[] info : MidiPlayerAplay.listPorts()) {
-            String item = info[0] + "   " + info[1] + " - " + info[2];
-            portModel.addElement(item);
-            if (info[0].equals(keep)) selectedItem = item;
+        updatingPorts = true;
+        try {
+            portModel.removeAllElements();
+            String selectedItem = null;
+            String firstItem = null;
+            String firstPort = null;
+            for (String[] info : MidiPlayerAplay.listPorts()) {
+                String item = info[0] + "   " + info[1] + " - " + info[2];
+                portModel.addElement(item);
+                if (firstItem == null) {
+                    firstItem = item;
+                    firstPort = info[0];
+                }
+                if (info[0].equals(selectedPort)) selectedItem = item;
+            }
+            if (selectedItem != null) {
+                portModel.setSelectedItem(selectedItem);
+                usePort(selectedPort);
+            } else if (firstItem != null) {
+                portModel.setSelectedItem(firstItem);
+                usePort(firstPort);
+            } else {
+                portModel.addElement("(no MIDI output port found)");
+            }
+        } finally {
+            updatingPorts = false;
         }
-        // 上次使用的端口当前不可用时仍然保留显示
-        if (selectedItem == null) {
-            selectedItem = keep + "   (not available)";
-            portModel.insertElementAt(selectedItem, 0);
-        }
-        portModel.setSelectedItem(selectedItem);
+    }
+
+    private void usePort(String port) {
+        selectedPort = port;
+        prefs.put("port", port);
+        if (player != null) player.setPort(port);
     }
 
     // 停止播放和复位需要一些时间，放到后台线程避免界面卡住
