@@ -69,6 +69,11 @@ public class MidiPlayerGUI {
         portPanel.add(portBox, BorderLayout.CENTER);
         portPanel.add(refreshButton, BorderLayout.EAST);
         frame.add(portPanel, BorderLayout.SOUTH);
+        if (!MidiPlayerAplay.isAplaymidiAvailable()) {
+            JOptionPane.showMessageDialog(frame,
+                    "aplaymidi not found.\nPlease install alsa-utils (e.g. sudo apt install alsa-utils).",
+                    "MIDI Player", JOptionPane.WARNING_MESSAGE);
+        }
         refreshPorts();
 
         // 事件处理
