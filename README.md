@@ -30,5 +30,5 @@ Requires JDK 11+.
 ./build.sh            # output in dist/
 ```
 
-Pushing a tag like `v1.0.0` builds x86_64 and aarch64 bundles with GitHub Actions and
+Pushing a tag like `v1.0.0` (or running the "Build and Release" workflow manually with a version) builds x86_64 and aarch64 bundles with GitHub Actions and
 publishes them as a release.
