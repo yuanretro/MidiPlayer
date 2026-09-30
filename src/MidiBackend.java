@@ -1,4 +1,5 @@
 import java.util.List;
+import java.util.prefs.Preferences;
 
 // Common interface of the playing backends used by the GUI.
 //  - Linux:   MidiPlayerAplay     (aplaymidi, can reach every ALSA sequencer port incl. TiMidity/FluidSynth)
@@ -33,6 +34,16 @@ public interface MidiBackend {
     // Each entry is {port id, display name}
     static List<String[]> listPorts() {
         return useAplay() ? MidiPlayerAplay.listPortsForDisplay() : MidiPlayerJavaSound.listPorts();
+    }
+
+    // Settings shared by the GUI and the CLI (last folder, last port)
+    static Preferences prefs() {
+        return Preferences.userNodeForPackage(MidiPlayerGUI.class);
+    }
+
+    // aplaymidi and Java Sound use different port ids, so they are saved separately
+    static String portPrefKey() {
+        return useAplay() ? "port" : "port.javasound";
     }
 
     static MidiBackend create(String midiFile) {

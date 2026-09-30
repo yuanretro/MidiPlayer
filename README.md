@@ -21,9 +21,28 @@ Get the latest build from the [Releases](https://github.com/yuanretro/MidiPlayer
 
 ```sh
 tar xzf MidiPlayer-<version>-linux-x86_64.tar.gz
-./MidiPlayer-<version>-linux-x86_64/bin/midiplayer       # GUI
-./MidiPlayer-<version>-linux-x86_64/bin/midiplayer-cli   # text mode
+./MidiPlayer-<version>-linux-x86_64/bin/midiplayer                 # GUI
+./MidiPlayer-<version>-linux-x86_64/bin/midiplayer-cli [file.mid]  # text mode
 ```
+
+On Windows, unzip and run `MidiPlayer.exe` (GUI) or `MidiPlayer-cli.exe` (text mode).
+With the jar: `java -jar MidiPlayer.jar` (GUI) or `java -cp MidiPlayer.jar MidiPlayerCLI` (text mode).
+
+## Text mode
+
+The text mode has the same features as the GUI, on Linux and Windows, and shares its saved
+settings (last port, last folder).
+
+| Command | |
+| --- | --- |
+| `load [file]` | Load a MIDI file. A relative path is also looked up in the last used folder |
+| `play` | Play (GM/GS/XG reset before playing) |
+| `stop` | Stop (GM/GS/XG reset after stopping) |
+| `loop` | Turn repeat on / off |
+| `port [n]` | List the MIDI output ports and choose one by number |
+| `status` | Show file, play time, state, loop and port |
+| `help` | Show the commands |
+| `exit` | Stop playing and quit (also at the end of input, e.g. Ctrl+D) |
 
 ## System requirements
 
