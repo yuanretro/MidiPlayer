@@ -10,6 +10,11 @@ on:
         description: "Release version, e.g. v1.0.0 (creates the tag and release). Leave empty to only build."
         required: false
         default: ""
+      notes_only:
+        description: "Only update the notes of an existing release, keep its files"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -97,7 +102,7 @@ jobs:
           tag_name: ${{ env.RELEASE_VERSION }}
           name: MidiPlayer ${{ env.RELEASE_VERSION }}
           target_commitish: ${{ github.sha }}
-          files: dist/*
+          files: ${{ !inputs.notes_only && 'dist/*' || '' }}
           body: |
             ## Downloads
 
