@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 public class MidiPlayerAplay {
 
-    private static final String APLAYMIDI = "/usr/bin/aplaymidi";
+    private static final String APLAYMIDI = findAplaymidi();
 
     // GM System On / GS Reset / XG System On
     private static final byte[] GM_RESET = {(byte) 0xF0, 0x7E, 0x7F, 0x09, 0x01, (byte) 0xF7};
@@ -128,6 +128,26 @@ public class MidiPlayerAplay {
         return port;
     }
 
+    // Find aplaymidi (from alsa-utils) in PATH, its location differs between distributions
+    private static String findAplaymidi() {
+        String path = System.getenv("PATH");
+        if (path != null) {
+            for (String dir : path.split(File.pathSeparator)) {
+                File f = new File(dir, "aplaymidi");
+                if (f.isFile() && f.canExecute()) return f.getAbsolutePath();
+            }
+        }
+        for (String dir : new String[]{"/usr/bin", "/bin", "/usr/local/bin"}) {
+            File f = new File(dir, "aplaymidi");
+            if (f.isFile() && f.canExecute()) return f.getAbsolutePath();
+        }
+        return "aplaymidi";
+    }
+
+    public static boolean isAplaymidiAvailable() {
+        return new File(APLAYMIDI).isAbsolute();
+    }
+
     // List available output ports using "aplaymidi -l". Each entry is {port, client name, port name}.
     public static List<String[]> listPorts() {
         List<String[]> ports = new ArrayList<>();
@@ -142,8 +162,11 @@ public class MidiPlayerAplay {
                 }
             }
             p.waitFor();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            if (isAplaymidiAvailable()) e.printStackTrace();
+            else System.out.println("aplaymidi not found, please install alsa-utils");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
         return ports;
     }
