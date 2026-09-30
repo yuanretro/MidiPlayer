@@ -21,9 +21,16 @@ Get the latest build from the [Releases](https://github.com/yuanretro/MidiPlayer
 
 ```sh
 tar xzf MidiPlayer-<version>-linux-x86_64.tar.gz
-./MidiPlayer-<version>-linux-x86_64/bin/midiplayer                 # GUI
-./MidiPlayer-<version>-linux-x86_64/bin/midiplayer-cli [file.mid]  # text mode
+cd MidiPlayer-<version>-linux-x86_64
+./bin/MidiPlayer                   # GUI
+./bin/MidiPlayer-cli [file.mid]    # text mode
+./install-menu.sh                  # optional: add both to the application menu
 ```
+
+In a file manager, double-click `bin/MidiPlayer` (or `MidiPlayer.desktop`) for the GUI and
+`MidiPlayer-cli.desktop` for the text mode in a terminal. Some desktops ask to "Allow
+Launching" a `.desktop` file the first time. `bin/midiplayer` and `bin/midiplayer-cli` from
+earlier versions still work.
 
 On Windows, unzip and run `MidiPlayer.exe` (GUI) or `MidiPlayer-cli.exe` (text mode).
 With the jar: `java -jar MidiPlayer.jar` (GUI) or `java -cp MidiPlayer.jar MidiPlayerCLI` (text mode).
